@@ -35,6 +35,12 @@ COPY --from=builder /app/src /app/src
 # Make sure we use venv
 ENV PATH="/app/.venv/bin:$PATH"
 
+# Remote mode defaults (override KION_SERVER_URL at runtime)
+ENV KION_MCP_TRANSPORT=http
+ENV KION_MCP_HOST=0.0.0.0
+ENV KION_MCP_PORT=8000
+EXPOSE 8000
+
 # Create non-root user for security
 RUN groupadd -r mcp && useradd -r -g mcp mcp
 RUN chown -R mcp:mcp /app
