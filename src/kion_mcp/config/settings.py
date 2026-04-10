@@ -218,6 +218,9 @@ class KionConfig:
         """Check if configuration needs setup (checks server URL and auth method)."""
         if not self.has_real_server_url():
             return True
+        # Remote mode only needs server URL — auth comes per-request
+        if self.is_remote_mode():
+            return False
         if self.is_oauth_mode():
             return False
         return not self.has_real_bearer() and not self.has_auth_script()
@@ -241,6 +244,11 @@ class KionConfig:
     def is_oauth_mode(self) -> bool:
         """Check if using OAuth authentication."""
         return bool(self.oauth_client_id and self.oauth_client_id.strip())
+
+    @staticmethod
+    def is_remote_mode() -> bool:
+        """Check if running in remote HTTP mode (behind Kion proxy)."""
+        return os.getenv("KION_MCP_TRANSPORT", "stdio").lower() == "http"
     
     def create_placeholder_config(self) -> str:
         """Create a placeholder config file in the script directory."""

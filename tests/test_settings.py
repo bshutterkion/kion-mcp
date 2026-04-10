@@ -72,3 +72,32 @@ class TestOAuthConfigFields:
             saved = yaml.safe_load(f)
         assert saved["oauth_client_id"] == "test-client-id"
         assert saved["oauth_scopes"] == "openid offline_access"
+
+
+class TestRemoteMode:
+    """Test remote/HTTP mode detection."""
+
+    def test_is_remote_mode_false_by_default(self):
+        config = KionConfig()
+        assert config.is_remote_mode() is False
+
+    def test_is_remote_mode_true_when_env_set(self):
+        with patch.dict(os.environ, {"KION_MCP_TRANSPORT": "http"}):
+            config = KionConfig()
+            assert config.is_remote_mode() is True
+
+    def test_is_remote_mode_false_for_stdio(self):
+        with patch.dict(os.environ, {"KION_MCP_TRANSPORT": "stdio"}):
+            config = KionConfig()
+            assert config.is_remote_mode() is False
+
+    def test_needs_configuration_false_in_remote_mode(self):
+        with patch.dict(os.environ, {"KION_MCP_TRANSPORT": "http", "KION_SERVER_URL": "https://kion.example.com"}):
+            config = KionConfig()
+            config._load_from_environment()
+            assert config.needs_configuration() is False
+
+    def test_needs_configuration_true_in_remote_mode_without_url(self):
+        with patch.dict(os.environ, {"KION_MCP_TRANSPORT": "http"}, clear=False):
+            config = KionConfig()
+            assert config.needs_configuration() is True
