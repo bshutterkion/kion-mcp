@@ -12,6 +12,7 @@ import httpx
 from ..config.settings import KionConfig
 from ..config.auth import AuthManager
 from ..utils.dxt import is_dxt_mode
+from ..config.proxy_auth import get_request_token
 
 
 def get_auth_failure_message(config_path: str) -> str:
@@ -121,8 +122,14 @@ async def make_authenticated_request(
     Raises:
         Exception: On authentication failure or other HTTP errors
     """
+    # Check for per-request token (HTTP/remote mode)
+    request_token = get_request_token()
+    extra_kwargs = {}
+    if request_token:
+        extra_kwargs["headers"] = build_standard_headers(request_token)
+
     # Make initial request
-    response = await http_client.request(method, url, json=json, timeout=timeout)
+    response = await http_client.request(method, url, json=json, timeout=timeout, **extra_kwargs)
     
     if response.status_code == 200:
         logging.debug(f"Successful {method} request to {url}")
@@ -136,7 +143,7 @@ async def make_authenticated_request(
         if refresh_success:
             # Retry the request with refreshed token
             logging.debug("Retrying request with refreshed token")
-            retry_response = await http_client.request(method, url, json=json, timeout=timeout)
+            retry_response = await http_client.request(method, url, json=json, timeout=timeout, **extra_kwargs)
             
             if retry_response.status_code == 200:
                 logging.debug(f"Successful {method} request to {url} after token refresh")
