@@ -3,6 +3,7 @@
 import httpx
 import json
 import logging
+import os
 import re
 from pathlib import Path
 from fastmcp import FastMCP
@@ -93,7 +94,24 @@ async def main():
     """Main entry point for the server."""
     logging.info("Starting Kion MCP Server")
     mcp = await create_full_server_async()
-    await mcp.run_async()
+
+    transport = os.getenv("KION_MCP_TRANSPORT", "stdio").lower()
+    if transport == "http":
+        from .config.proxy_auth import KionProxyTokenVerifier
+        mcp.auth = KionProxyTokenVerifier()
+        host = os.getenv("KION_MCP_HOST", "0.0.0.0")
+        port = int(os.getenv("KION_MCP_PORT", "8000"))
+        path = os.getenv("KION_MCP_PATH", "/mcp")
+        logging.info(f"Starting HTTP server on {host}:{port}{path}")
+        await mcp.run_async(
+            transport="http",
+            host=host,
+            port=port,
+            path=path,
+        )
+    else:
+        logging.info("Starting stdio server")
+        await mcp.run_async()
 
 
 def run():

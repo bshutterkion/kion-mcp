@@ -194,36 +194,42 @@ def configure_config_mode(mcp: FastMCP) -> None:
 def setup_authentication_and_middleware(mcp: FastMCP, config=None, auth_manager=None) -> tuple[KionConfig, AuthManager]:
     """
     Set up authentication and middleware for the server.
-    
+
     Args:
         mcp: The FastMCP server instance
         config: Optional existing config
         auth_manager: Optional existing auth_manager
-        
+
     Returns:
         tuple: (config, auth_manager) loaded/reloaded as needed
     """
     # Reload config and auth_manager in case they were updated during config mode
     config = KionConfig.load()
     auth_manager = AuthManager(config)
-    
-    # Set up authentication and middleware
+
+    # Set up base URL for API calls
     mcp._client.base_url = config.server_base_url
-    try:
-        token = auth_manager.get_bearer_token()
-        mcp._client.headers = build_standard_headers(token)
-    except Exception as e:
-        # OAuth first-run or auth not ready — set minimal headers.
-        # The 401 middleware will trigger auth refresh on first API call.
-        logging.warning(f"Could not get initial bearer token: {e}")
+
+    if config.is_remote_mode():
+        # Remote/HTTP mode: auth comes per-request from the proxy.
+        # Set minimal headers — per-request token is injected by make_authenticated_request().
         mcp._client.headers = build_standard_headers("")
-    
+        logging.info("Remote mode: auth will be provided per-request by the proxy")
+    else:
+        # Standalone/stdio mode: use self-managed auth
+        try:
+            token = auth_manager.get_bearer_token()
+            mcp._client.headers = build_standard_headers(token)
+        except Exception as e:
+            logging.warning(f"Could not get initial bearer token: {e}")
+            mcp._client.headers = build_standard_headers("")
+
     auth_middleware = AuthenticationMiddleware(config, auth_manager, mcp)
     mcp.add_middleware(auth_middleware)
     mcp.add_middleware(FinancialOperationMiddleware())
-    
+
     logging.info("Authentication and middleware configured")
-    
+
     return config, auth_manager
 
 
