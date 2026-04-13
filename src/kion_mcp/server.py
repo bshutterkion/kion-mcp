@@ -97,11 +97,13 @@ async def main():
 
     transport = os.getenv("KION_MCP_TRANSPORT", "stdio").lower()
     if transport == "http":
-        from .config.proxy_auth import KionProxyTokenVerifier
-        mcp.auth = KionProxyTokenVerifier()
+        from .config.proxy_auth import build_remote_auth_provider
         host = os.getenv("KION_MCP_HOST", "0.0.0.0")
         port = int(os.getenv("KION_MCP_PORT", "8000"))
         path = os.getenv("KION_MCP_PATH", "/mcp")
+        server_url = os.getenv("KION_SERVER_URL", "")
+        mcp_base_url = f"http://{host}:{port}"
+        mcp.auth = build_remote_auth_provider(server_url, mcp_base_url)
         logging.info(f"Starting HTTP server on {host}:{port}{path}")
         await mcp.run_async(
             transport="http",
