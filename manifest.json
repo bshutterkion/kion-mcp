@@ -30,6 +30,7 @@
       "env": {
         "KION_SERVER_URL": "${user_config.server_base_url}",
         "KION_BEARER_TOKEN": "${user_config.bearer_token}",
+        "KION_OAUTH_CLIENT_ID": "${user_config.oauth_client_id}",
         "KION_DXT_MODE": "true"
       }
     }
@@ -62,9 +63,15 @@
     "bearer_token": {
       "type": "string",
       "title": "Bearer Token",
-      "description": "The bearer token for authenticating with the Kion API. You can generate this in your Kion instance under 'App API Keys' in your user menu (upper right corner) by clicking 'Add +' on the API Keys page.",
-      "required": true,
+      "description": "The bearer token for authenticating with the Kion API. You can generate this in your Kion instance under 'App API Keys' in your user menu (upper right corner) by clicking 'Add +' on the API Keys page. Leave blank if using OAuth.",
+      "required": false,
       "sensitive": true
+    },
+    "oauth_client_id": {
+      "type": "string",
+      "title": "OAuth Client ID",
+      "description": "The OAuth Client ID for device flow authentication. You can find this in your Kion instance under System Administration > OAuth Clients. Leave blank if using a Bearer Token instead.",
+      "required": false
     }
   },
   "keywords": [
