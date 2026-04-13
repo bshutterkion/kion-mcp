@@ -30,14 +30,14 @@ def _mock_async_client(*responses):
 class TestOAuthUrl:
     """Test OAuth URL construction."""
 
-    def test_strips_api_suffix(self, oauth_config):
+    def test_keeps_api_prefix(self, oauth_config):
         mgr = OAuthManager(oauth_config)
-        assert mgr._oauth_url("/token") == "https://kion.example.com/token"
+        assert mgr._oauth_url("/token") == "https://kion.example.com/api/token"
 
-    def test_strips_api_suffix_with_trailing_slash(self, oauth_config):
+    def test_strips_trailing_slash(self, oauth_config):
         oauth_config.server_base_url = "https://kion.example.com/api/"
         mgr = OAuthManager(oauth_config)
-        assert mgr._oauth_url("/token") == "https://kion.example.com/token"
+        assert mgr._oauth_url("/token") == "https://kion.example.com/api/token"
 
     def test_no_api_suffix(self, oauth_config):
         oauth_config.server_base_url = "https://kion.example.com"

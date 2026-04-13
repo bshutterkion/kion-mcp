@@ -28,15 +28,15 @@ class OAuthManager:
         self.config = config
 
     def _oauth_url(self, path: str) -> str:
-        """Build an OAuth endpoint URL at the server root (outside /api).
+        """Build an OAuth endpoint URL.
 
-        OAuth endpoints live at the root of the Kion instance, e.g.:
-          /device_authorization, /token, /authorize
-        But server_base_url typically ends with /api, so we strip it.
+        OAuth endpoints are registered at root paths on webapi (e.g.
+        /device_authorization, /token), but the Kion ingress only routes
+        /api/* to webapi. So we keep the /api prefix when present —
+        /api/device_authorization works both through the ingress (remote)
+        and directly to webapi (localhost).
         """
         base = self.config.server_base_url.rstrip("/")
-        if base.endswith("/api"):
-            base = base[:-4]
         return f"{base}{path}"
 
     @staticmethod
